@@ -6,7 +6,7 @@ const cors = require('cors'); // cross-origin resource sharing
 require('dotenv').config(); // load environment variables
 
 // Import the WOD model
-const WOD = require('./wodModel'); // import WOD model
+const POST = require('./postModel'); // import WOD model
 
 // Initialize Express app
 const app = express();
@@ -24,8 +24,7 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 // Get all WODs
 app.get('/data', async (req, res) => {
   try {
-    const wods = await WOD.find(); // Fetch all WODs from the database
-    console.log("Fetched WODs:", wods);
+    const wods = await POST.find();
     res.json(wods);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch WODs" });
@@ -33,7 +32,7 @@ app.get('/data', async (req, res) => {
 });
 
 // Create a new WOD
-app.post('/', async (req, res) => {
+app.post('/new-post', async (req, res) => {
   try {
     const newWod = new WOD(req.body); // Create a new WOD instance
     const savedWod = await newWod.save(); // Save the WOD to the database

@@ -3,33 +3,57 @@ require('dotenv').config(); // Load environment variables
 const axios = require('axios');
 const mongoose = require('mongoose');
 const fs = require('fs');
-const { XMLParser } = require('fast-xml-parser'); // Updated import
+const { XMLParser } = require('fast-xml-parser');
+const Grid = require('gridfs-stream');
+const { Readable } = require('stream');
 
 // Replace with your actual MongoDB URI and WordPress XML file path
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/wordpressData';
 const WORDPRESS_XML_PATH = process.env.WORDPRESS_XML_PATH || './your-wxr-file.xml';
 
 // Mongoose schema for a WP Post
-const postSchema = new mongoose.Schema({
-  wp_id: { type: Number, required: true, unique: true },
-  title: { type: String, required: true },
-  content: { type: String, required: true },
-  date: { type: Date, required: true },
-  images: { type: [String], default: [] }, // Array of image URLs
-});
+const Post = require('./postModel');
 
-const Post = mongoose.model('Post', postSchema);
+let gfs;
+let gridfsBucket;
+
+async function connectToMongoDB() {
+  const connection = await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  console.log('Connected to MongoDB');
+
+  // Initialize GridFS
+  const db = mongoose.connection.db;
+  gridfsBucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'images' });
+  gfs = Grid(db, mongoose.mongo);
+  gfs.collection('images');
+}
+
+async function saveImageToGridFS(url) {
+  try {
+    const response = await axios.get(url, { responseType: 'stream' });
+    const filename = url.split('/').pop();
+
+    const uploadStream = gridfsBucket.openUploadStream(filename);
+    response.data.pipe(uploadStream);
+
+    return new Promise((resolve, reject) => {
+      uploadStream.on('finish', () => resolve(uploadStream.id));
+      uploadStream.on('error', reject);
+    });
+  } catch (err) {
+    console.error(`Error downloading image from ${url}:`, err.message);
+    return null;
+  }
+}
 
 async function importPosts() {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log('Connected to MongoDB');
+    await connectToMongoDB();
 
     // Read and parse the WordPress XML file
     const xmlData = fs.readFileSync(WORDPRESS_XML_PATH, 'utf-8');
-    const parser = new XMLParser(); // Create an instance of XMLParser
-    const jsonData = parser.parse(xmlData); // Parse the XML data
+    const parser = new XMLParser();
+    const jsonData = parser.parse(xmlData);
 
     // Extract posts from the XML
     const posts = jsonData.rss.channel.item || [];
@@ -37,8 +61,8 @@ async function importPosts() {
 
     for (let post of posts) {
       try {
-        const content = post['content:encoded'] || ''; // Get content or default to an empty string
-        const images = extractImageUrls(content);
+        const content = post['content:encoded'] || '';
+        const imageUrls = extractImageUrls(content);
 
         // Skip posts with empty content
         if (!content.trim()) {
@@ -48,27 +72,43 @@ async function importPosts() {
 
         const existing = await Post.findOne({ wp_id: post['wp:post_id'] });
         if (!existing) {
+          // Save images to GridFS and get their IDs
+          const imageIds = [];
+          for (const url of imageUrls) {
+            const imageId = await saveImageToGridFS(url);
+            if (imageId) imageIds.push(imageId);
+          }
+
+          // Create the post
           await Post.create({
             wp_id: post['wp:post_id'],
-            title: post.title || 'Untitled', // Provide a default title if missing
+            title: post.title || 'Untitled',
             content: content,
             date: new Date(post.pubDate),
-            images: images,
+            images: imageIds,
           });
           console.log(`Post with ID ${post['wp:post_id']} imported.`);
         } else {
-          console.log(`Post with ID ${post['wp:post_id']} already exists.`);
+          // Update existing post with GridFS images
+          const imageIds = [];
+          for (const url of imageUrls) {
+            const imageId = await saveImageToGridFS(url);
+            if (imageId) imageIds.push(imageId);
+          }
+
+          existing.images = imageIds; // Update the images field with GridFS IDs
+          await existing.save();
+          console.log(`Post with ID ${post['wp:post_id']} updated with GridFS images.`);
         }
       } catch (err) {
-        console.error(`Error saving post with ID ${post['wp:post_id']}:`, err.message);
+        console.error(`Error processing post with ID ${post['wp:post_id']}:`, err.message);
       }
     }
 
-    console.log('Posts imported successfully!');
+    console.log('Posts imported and updated successfully!');
   } catch (err) {
     console.error('Error importing posts:', err.message);
   } finally {
-    // Disconnect from MongoDB
     await mongoose.disconnect();
     console.log('Disconnected from MongoDB');
     process.exit();
