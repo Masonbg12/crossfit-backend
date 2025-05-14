@@ -1,12 +1,12 @@
 // external dependencies
-const express = require('express'); // express server
-const mongoose = require('mongoose'); // MongoDB
+const express = require('express');
+const mongoose = require('mongoose');
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const cors = require('cors'); // cross-origin resource sharing
-require('dotenv').config(); // load environment variables
+const cors = require('cors');
+require('dotenv').config();
 
 // Import the WOD model
-const POST = require('./postModel'); // import WOD model
+const POST = require('./postModel');
 
 // Initialize Express app
 const app = express();
@@ -34,8 +34,8 @@ app.get('/data', async (req, res) => {
 // Create a new WOD
 app.post('/new-post', async (req, res) => {
   try {
-    const newWod = new WOD(req.body); // Create a new WOD instance
-    const savedWod = await newWod.save(); // Save the WOD to the database
+    const newWod = new WOD(req.body);
+    const savedWod = await newWod.save();
     res.status(201).json(savedWod);
   } catch (err) {
     res.status(400).json({ error: "Failed to create WOD", details: err.message });
@@ -43,7 +43,7 @@ app.post('/new-post', async (req, res) => {
 });
 
 // Update an existing WOD by ID
-app.put('/:id', async (req, res) => {
+app.put('/update-post', async (req, res) => {
   try {
     const updatedWod = await WOD.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedWod) {
@@ -56,7 +56,7 @@ app.put('/:id', async (req, res) => {
 });
 
 // Delete a WOD by ID
-app.delete('/:id', async (req, res) => {
+app.delete('/delete-post', async (req, res) => {
   try {
     const deletedWod = await WOD.findByIdAndDelete(req.params.id);
     if (!deletedWod) {
