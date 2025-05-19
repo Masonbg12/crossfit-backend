@@ -11,6 +11,9 @@ const postSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   // References to GridFS file IDs
   images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
+  // Scheduled date and time for the WOD
+  scheduledDateTime: { type: Date },
 });
+  
 
 module.exports = mongoose.model('Post', postSchema);
