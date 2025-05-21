@@ -10,7 +10,7 @@ const postSchema = new mongoose.Schema({
   // Date of the WOD
   date: { type: Date, required: true },
   // References to GridFS file IDs
-  images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
+  images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'images.files' }],
   // Scheduled date and time for the WOD
   scheduledDateTime: { type: Date },
 });

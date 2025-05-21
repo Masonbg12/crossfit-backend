@@ -62,7 +62,15 @@ async function importPosts() {
     for (let post of posts) {
       try {
         const content = post['content:encoded'] || '';
-        const imageUrls = extractImageUrls(content);
+        const postDate = new Date(post.pubDate);
+        const twoYearsAgo = new Date();
+        twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+        // Only include images if post is less than 2 years old
+        const imageUrls =
+          postDate >= twoYearsAgo
+            ? extractImageUrls(content)
+            : [];
 
         // Skip posts with empty content
         if (!content.trim()) {
@@ -124,6 +132,18 @@ function extractImageUrls(content) {
     imageUrls.push(match[1]);
   }
   return imageUrls;
+}
+
+// Helper function to check if an image is less than 2 years old
+function isImageRecent(url) {
+  // Example URL: https://yourdomain.com/wp-content/uploads/2022/05/image.jpg
+  const match = url.match(/\/uploads\/(\d{4})\/(\d{2})\//);
+  if (!match) return false;
+  const [ , year, month ] = match;
+  const imageDate = new Date(Number(year), Number(month) - 1);
+  const twoYearsAgo = new Date();
+  twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+  return imageDate >= twoYearsAgo;
 }
 
 importPosts();
