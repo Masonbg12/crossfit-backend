@@ -22,6 +22,18 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
+// Multer GridFS storage setup
+const storage = new GridFsStorage({
+  url: process.env.MONGO_URI,
+  file: (req, file) => {
+    return {
+      filename: `${Date.now()}-${file.originalname}`,
+      bucketName: 'images'
+    };
+  }
+});
+const upload = multer({ storage });
+
 // Get all WODs, include image URLs if available
 app.get('/data', async (req, res) => {
   try {
@@ -63,14 +75,25 @@ app.get('/images/:id', async (req, res) => {
   }
 });
 
-// Create a new WOD
-app.post('/new-post', async (req, res) => {
+// Create a new WOD (with optional image upload)
+app.post('/new-post', upload.single('images'), async (req, res) => {
+  console.log("Received POST /new-post", req.body, req.file);
   try {
-    const newWod = new WOD(req.body);
+    // Build the post object
+    const postData = {
+      date: req.body.date,
+      title: req.body.title,
+      content: req.body.content,
+      images: req.file ? [req.file.id] : [],
+      scheduledDateTime: req.body.scheduledDateTime || null
+    };
+
+    const newWod = new POST(postData);
     const savedWod = await newWod.save();
     console.log("New WOD created:", savedWod);
     res.status(201).json(savedWod);
   } catch (err) {
+    console.error("Error creating WOD:", err.message);
     res.status(400).json({ error: "Failed to create WOD", details: err.message });
   }
 });
