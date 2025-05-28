@@ -39,7 +39,6 @@ app.get('/data', async (req, res) => {
   try {
     const wods = await POST.find();
     const mapped = wods.map(wod => {
-      // Only include image URLs if images array is not empty
       let imageUrl = null;
       if (wod.images && wod.images.length > 0) {
         // Use the first image as the main image
@@ -85,7 +84,6 @@ app.post('/new-post', upload.single('images'), async (req, res) => {
       title: req.body.title,
       content: req.body.content,
       images: req.file ? [req.file.id] : [],
-      scheduledDateTime: req.body.scheduledDateTime || null
     };
 
     const newWod = new POST(postData);
