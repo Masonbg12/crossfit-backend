@@ -77,13 +77,27 @@ app.get('/images/:id', async (req, res) => {
 // Create a new WOD (with optional image upload)
 app.post('/new-post', upload.single('images'), async (req, res) => {
   console.log("Received POST /new-post", req.body, req.file);
+
+  // Defensive check for file upload errors
+  if (req.file === undefined && req.headers['content-type']?.includes('multipart/form-data') && req.body.images) {
+    return res.status(400).json({ error: "File upload failed. Please try again." });
+  }
+
   try {
+    // Find the current max number_id
+    const lastPost = await POST.findOne().sort({ number_id: -1 }).select('number_id');
+    let nextNumberId = 10872;
+    if (lastPost && lastPost.number_id) {
+      nextNumberId = lastPost.number_id + 1;
+    }
+
     // Build the post object
     const postData = {
       date: req.body.date,
       title: req.body.title,
       content: req.body.content,
       images: req.file ? [req.file.id] : [],
+      wp_id:nextNumberId,
     };
 
     const newWod = new POST(postData);
@@ -97,9 +111,19 @@ app.post('/new-post', upload.single('images'), async (req, res) => {
 });
 
 // Update an existing WOD by ID
-app.put('/update-post', async (req, res) => {
+app.put('/update-post/:id', upload.single('images'), async (req, res) => {
   try {
-    const updatedWod = await WOD.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Build update object
+    const updateData = {
+      date: req.body.date,
+      title: req.body.title,
+      content: req.body.content,
+    };
+    if (req.file) {
+      updateData.images = [req.file.id];
+    }
+
+    const updatedWod = await POST.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!updatedWod) {
       return res.status(404).json({ error: "WOD not found" });
     }
@@ -110,9 +134,9 @@ app.put('/update-post', async (req, res) => {
 });
 
 // Delete a WOD by ID
-app.delete('/delete-post', async (req, res) => {
+app.delete('/delete-post/:id', async (req, res) => {
   try {
-    const deletedWod = await WOD.findByIdAndDelete(req.params.id);
+    const deletedWod = await POST.findByIdAndDelete(req.params.id);
     if (!deletedWod) {
       return res.status(404).json({ error: "WOD not found" });
     }
