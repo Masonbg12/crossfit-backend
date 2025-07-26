@@ -74,6 +74,32 @@ app.get('/images/:id', async (req, res) => {
   }
 });
 
+// Helper function to remove image from the oldest post
+async function removeImageFromOldestPost() {
+  try {
+    const db = mongoose.connection.db;
+    const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'images' });
+
+    // Find the oldest post with at least one image
+    const oldestWithImage = await POST.findOne({ images: { $exists: true, $not: { $size: 0 } } }).sort({ date: 1 });
+    if (oldestWithImage && oldestWithImage.images.length > 0) {
+      for (const imgId of oldestWithImage.images) {
+        try {
+          await bucket.delete(imgId);
+          console.log(`Deleted image: ${imgId} from post: ${oldestWithImage._id}`);
+        } catch (err) {
+          console.error(`Failed to delete image: ${imgId}`, err.message);
+        }
+      }
+      oldestWithImage.images = [];
+      await oldestWithImage.save();
+      console.log(`Cleared images for oldest post: ${oldestWithImage._id}`);
+    }
+  } catch (err) {
+    console.error("Error removing image from oldest post:", err.message);
+  }
+}
+
 // Create a new WOD (with optional image upload)
 app.post('/new-post', upload.single('images'), async (req, res) => {
   console.log("Received POST /new-post", req.body, req.file);
@@ -97,12 +123,16 @@ app.post('/new-post', upload.single('images'), async (req, res) => {
       title: req.body.title,
       content: req.body.content,
       images: req.file ? [req.file.id] : [],
-      wp_id:nextNumberId,
+      wp_id: nextNumberId,
     };
 
     const newWod = new POST(postData);
     const savedWod = await newWod.save();
     console.log("New WOD created:", savedWod);
+
+    // Call cleanup function after new post is added
+    await removeImageFromOldestPost();
+
     res.status(201).json(savedWod);
   } catch (err) {
     console.error("Error creating WOD:", err.message);
@@ -147,7 +177,7 @@ app.delete('/delete-post/:id', async (req, res) => {
 });
 
 // Weekly cleanup: delete images from posts older than 2 years, but keep the posts
-const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+/*const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 setInterval(async () => {
   try {
     const db = mongoose.connection.db;
@@ -177,7 +207,7 @@ setInterval(async () => {
   } catch (err) {
     console.error("Error during weekly cleanup:", err.message);
   }
-}, ONE_WEEK);
+}, ONE_WEEK);*/
 
 // Start the server
 const PORT = process.env.PORT || 5000;
