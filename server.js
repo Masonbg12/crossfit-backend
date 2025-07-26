@@ -11,7 +11,9 @@ const POST = require('./postModel');
 
 // Initialize Express app
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "https://crossfit-website-n1pc-qev5hy93y-masonbg12s-projects.vercel.app/"
+}));
 app.use(express.json());
 
 // Log the MongoDB URI
