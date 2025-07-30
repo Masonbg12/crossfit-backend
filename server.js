@@ -13,7 +13,7 @@ const POST = require('./postModel');
 const app = express();
 app.use(cors({
   origin: "https://crossfit-website-n1pc.vercel.app",
-  origin: "http://localhost:3000",
+  origin: "http://localhost:5000",
   credentials: true
 }));
 app.use(express.json());
