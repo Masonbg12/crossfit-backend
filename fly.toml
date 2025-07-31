@@ -9,7 +9,7 @@ primary_region = 'dfw'
 [build]
 
 [env]
-FRONTEND_URL = "https://crossfit-website-n1pc.vercel.app/WOD"
+FRONTEND_URL = "https://crossfit-website-n1pc.vercel.app"
 
 [http_service]
   internal_port = 3000
