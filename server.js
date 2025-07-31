@@ -13,9 +13,9 @@ const POST = require('./postModel');
 const app = express();
 app.use(cors({
   origin: [
-    "https://crossfit-website-n1pc.vercel.app", //vercel
-    "http://localhost:3000",                    // Local React dev server
-    "http://localhost:5000"                     // Local backend
+    process.env.VERCEL_URL,
+    process.env.FRONTEND_URL,
+    `http://localhost:${process.env.PORT}`
   ],
   credentials: true
 }));
