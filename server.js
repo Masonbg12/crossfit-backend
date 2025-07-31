@@ -13,7 +13,7 @@ const POST = require('./postModel');
 const app = express();
 app.use(cors({
   origin: [
-    "https://crossfit-website-n1pc.vercel.app",
+    process.env.FRONTEND_URL,
     process.env.LOCAL_FRONTEND_URL,
     `http://localhost:${process.env.PORT}`
   ],
