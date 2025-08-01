@@ -24,10 +24,20 @@ app.use(express.json());
 // Log the MongoDB URI
 console.log("MONGO_URI:", process.env.MONGO_URI);
 
+// Log outbound IP information
+console.log("Attempting MongoDB connection...");
+
 // Connect to MongoDB using Mongoose
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.error("MongoDB connection error:", err));
+  .then(() => {
+    console.log("MongoDB connected successfully");
+    // Log connection details
+    console.log("MongoDB connection state:", mongoose.connection.readyState);
+  })
+  .catch(err => {
+    console.error("MongoDB connection error:", err.message);
+    console.error("Full error:", err);
+  });
 
 // Multer GridFS storage setup
 const storage = new GridFsStorage({
@@ -60,6 +70,47 @@ app.get('/data', async (req, res) => {
     res.json(mapped);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch WODs" });
+  }
+});
+
+// Debug route to check server IP and connection info
+app.get('/debug/ip', async (req, res) => {
+  try {
+    // Try to get external IP using a service
+    const fetch = require('node:fetch');
+    let externalIP = 'Unable to determine';
+    
+    try {
+      const response = await fetch('https://api.ipify.org?format=json', { timeout: 5000 });
+      const data = await response.json();
+      externalIP = data.ip;
+    } catch (err) {
+      console.error('Could not fetch external IP:', err.message);
+    }
+
+    const debugInfo = {
+      externalIP: externalIP,
+      mongoConnectionState: mongoose.connection.readyState,
+      mongoConnectionStates: {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+      },
+      currentState: mongoose.connection.readyState === 1 ? 'connected' : 
+                   mongoose.connection.readyState === 0 ? 'disconnected' :
+                   mongoose.connection.readyState === 2 ? 'connecting' : 'disconnecting',
+      host: req.get('host'),
+      userAgent: req.get('user-agent'),
+      requestIP: req.ip || req.connection.remoteAddress,
+      headers: req.headers
+    };
+
+    console.log('Debug info requested:', debugInfo);
+    res.json(debugInfo);
+  } catch (err) {
+    console.error('Debug route error:', err);
+    res.status(500).json({ error: 'Debug info unavailable', details: err.message });
   }
 });
 
