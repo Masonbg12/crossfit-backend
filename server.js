@@ -28,7 +28,7 @@ console.log("MONGO_URI:", process.env.MONGO_URI);
 console.log("Attempting MongoDB connection...");
 
 // Connect to MongoDB using Mongoose
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, { connectTimeoutMS: 3000, useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log("MongoDB connected successfully");
     // Log connection details
@@ -77,7 +77,6 @@ app.get('/data', async (req, res) => {
 app.get('/debug/ip', async (req, res) => {
   try {
     // Try to get external IP using a service
-    const fetch = require('node:fetch');
     let externalIP = 'Unable to determine';
     
     try {
