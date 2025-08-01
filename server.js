@@ -48,8 +48,9 @@ app.get('/data', async (req, res) => {
     const mapped = wods.map(wod => {
       let imageUrl = null;
       if (wod.images && wod.images.length > 0) {
-        // Use the first image as the main image
-        imageUrl = `${req.protocol}://${req.get('host')}/images/${wod.images[0]}`;
+        // Use HTTPS for production, HTTP for local development
+        const protocol = req.get('host').includes('fly.dev') ? 'https' : req.protocol;
+        imageUrl = `${protocol}://${req.get('host')}/images/${wod.images[0]}`;
       }
       return {
         ...wod.toObject(),
