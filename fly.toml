@@ -8,8 +8,11 @@ primary_region = 'dfw'
 
 [build]
 
+[env]
+FRONTEND_URL = "https://crossfit-website-n1pc.vercel.app"
+
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true

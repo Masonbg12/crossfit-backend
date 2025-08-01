@@ -13,8 +13,8 @@ const POST = require('./postModel');
 const app = express();
 app.use(cors({
   origin: [
-    process.env.VERCEL_URL,
     process.env.FRONTEND_URL,
+    process.env.LOCAL_FRONTEND_URL,
     `http://localhost:${process.env.PORT}`
   ],
   credentials: true
@@ -217,5 +217,9 @@ setInterval(async () => {
 }, ONE_WEEK);*/
 
 // Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 8080;
+const HOST = '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+    console.log(`Server running on ${HOST}:${PORT}`);
+});
