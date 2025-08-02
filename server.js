@@ -87,8 +87,26 @@ app.get('/debug/ip', async (req, res) => {
       console.error('Could not fetch external IP:', err.message);
     }
 
+    // Check DNS resolution for MongoDB host
+    let dnsInfo = {};
+    try {
+      const dns = require('dns').promises;
+      const mongoHost = process.env.MONGO_URI ? new URL(process.env.MONGO_URI).hostname : 'unknown';
+      
+      if (mongoHost !== 'unknown') {
+        const addresses = await dns.lookup(mongoHost, { all: true });
+        dnsInfo.mongoHost = mongoHost;
+        dnsInfo.resolvedAddresses = addresses;
+        dnsInfo.ipv4Addresses = addresses.filter(addr => addr.family === 4);
+        dnsInfo.ipv6Addresses = addresses.filter(addr => addr.family === 6);
+      }
+    } catch (err) {
+      dnsInfo.error = err.message;
+    }
+
     const debugInfo = {
       externalIP: externalIP,
+      dnsResolution: dnsInfo,
       mongoConnectionState: mongoose.connection.readyState,
       mongoConnectionStates: {
         0: 'disconnected',
