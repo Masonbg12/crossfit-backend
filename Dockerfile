@@ -31,10 +31,6 @@ COPY . .
 # Final stage for app image
 FROM base
 
-# Configure IPv4 preference to force outbound connections through dedicated IPv4
-RUN echo "# Prefer IPv4 over IPv6 for outbound connections" >> /etc/gai.conf && \
-    echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
-
 # Copy built application
 COPY --from=build /app /app
 
