@@ -21,12 +21,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Log the MongoDB URI
-console.log("MONGO_URI:", process.env.MONGO_URI);
-
-// Log outbound IP information
-console.log("Attempting MongoDB connection...");
-
 // Connect to MongoDB using Mongoose
 mongoose.connect(process.env.MONGO_URI, {  connectTimeoutMS: 3000, useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
@@ -70,64 +64,6 @@ app.get('/data', async (req, res) => {
     res.json(mapped);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch WODs" });
-  }
-});
-
-// Debug route to check server IP and connection info
-app.get('/debug/ip', async (req, res) => {
-  try {
-    // Try to get external IP using a service
-    let externalIP = 'Unable to determine';
-    
-    try {
-      const response = await fetch('https://api.ipify.org?format=json', { timeout: 5000 });
-      const data = await response.json();
-      externalIP = data.ip;
-    } catch (err) {
-      console.error('Could not fetch external IP:', err.message);
-    }
-
-    // Check DNS resolution for MongoDB host
-    let dnsInfo = {};
-    try {
-      const dns = require('dns').promises;
-      const mongoHost = process.env.MONGO_URI ? new URL(process.env.MONGO_URI).hostname : 'unknown';
-      
-      if (mongoHost !== 'unknown') {
-        const addresses = await dns.lookup(mongoHost, { all: true });
-        dnsInfo.mongoHost = mongoHost;
-        dnsInfo.resolvedAddresses = addresses;
-        dnsInfo.ipv4Addresses = addresses.filter(addr => addr.family === 4);
-        dnsInfo.ipv6Addresses = addresses.filter(addr => addr.family === 6);
-      }
-    } catch (err) {
-      dnsInfo.error = err.message;
-    }
-
-    const debugInfo = {
-      externalIP: externalIP,
-      dnsResolution: dnsInfo,
-      mongoConnectionState: mongoose.connection.readyState,
-      mongoConnectionStates: {
-        0: 'disconnected',
-        1: 'connected',
-        2: 'connecting',
-        3: 'disconnecting'
-      },
-      currentState: mongoose.connection.readyState === 1 ? 'connected' : 
-                   mongoose.connection.readyState === 0 ? 'disconnected' :
-                   mongoose.connection.readyState === 2 ? 'connecting' : 'disconnecting',
-      host: req.get('host'),
-      userAgent: req.get('user-agent'),
-      requestIP: req.ip || req.connection.remoteAddress,
-      headers: req.headers
-    };
-
-    console.log('Debug info requested:', debugInfo);
-    res.json(debugInfo);
-  } catch (err) {
-    console.error('Debug route error:', err);
-    res.status(500).json({ error: 'Debug info unavailable', details: err.message });
   }
 });
 
@@ -180,17 +116,29 @@ async function removeImageFromOldestPost() {
 app.post('/new-post', upload.single('images'), async (req, res) => {
   console.log("Received POST /new-post", req.body, req.file);
 
+  // Validate required fields
+  if (!req.body.date || !req.body.title || !req.body.content) {
+    return res.status(400).json({ 
+      error: "Missing required fields", 
+      missing: {
+        date: !req.body.date,
+        title: !req.body.title,
+        content: !req.body.content
+      }
+    });
+  }
+
   // Defensive check for file upload errors
   if (req.file === undefined && req.headers['content-type']?.includes('multipart/form-data') && req.body.images) {
     return res.status(400).json({ error: "File upload failed. Please try again." });
   }
 
   try {
-    // Find the current max number_id
-    const lastPost = await POST.findOne().sort({ number_id: -1 }).select('number_id');
+    // Find the current max wp_id
+    const lastPost = await POST.findOne().sort({ wp_id: -1 }).select('wp_id');
     let nextNumberId = 10872;
-    if (lastPost && lastPost.number_id) {
-      nextNumberId = lastPost.number_id + 1;
+    if (lastPost && lastPost.wp_id) {
+      nextNumberId = lastPost.wp_id + 1;
     }
 
     // Build the post object
@@ -249,6 +197,64 @@ app.delete('/delete-post/:id', async (req, res) => {
     res.json({ message: "WOD deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete WOD", details: err.message });
+  }
+});
+
+// Debug route to check server IP and connection info
+app.get('/debug/ip', async (req, res) => {
+  try {
+    // Try to get external IP using a service
+    let externalIP = 'Unable to determine';
+    
+    try {
+      const response = await fetch('https://api.ipify.org?format=json', { timeout: 5000 });
+      const data = await response.json();
+      externalIP = data.ip;
+    } catch (err) {
+      console.error('Could not fetch external IP:', err.message);
+    }
+
+    // Check DNS resolution for MongoDB host
+    let dnsInfo = {};
+    try {
+      const dns = require('dns').promises;
+      const mongoHost = process.env.MONGO_URI ? new URL(process.env.MONGO_URI).hostname : 'unknown';
+      
+      if (mongoHost !== 'unknown') {
+        const addresses = await dns.lookup(mongoHost, { all: true });
+        dnsInfo.mongoHost = mongoHost;
+        dnsInfo.resolvedAddresses = addresses;
+        dnsInfo.ipv4Addresses = addresses.filter(addr => addr.family === 4);
+        dnsInfo.ipv6Addresses = addresses.filter(addr => addr.family === 6);
+      }
+    } catch (err) {
+      dnsInfo.error = err.message;
+    }
+
+    const debugInfo = {
+      externalIP: externalIP,
+      dnsResolution: dnsInfo,
+      mongoConnectionState: mongoose.connection.readyState,
+      mongoConnectionStates: {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+      },
+      currentState: mongoose.connection.readyState === 1 ? 'connected' : 
+                   mongoose.connection.readyState === 0 ? 'disconnected' :
+                   mongoose.connection.readyState === 2 ? 'connecting' : 'disconnecting',
+      host: req.get('host'),
+      userAgent: req.get('user-agent'),
+      requestIP: req.ip || req.connection.remoteAddress,
+      headers: req.headers
+    };
+
+    console.log('Debug info requested:', debugInfo);
+    res.json(debugInfo);
+  } catch (err) {
+    console.error('Debug route error:', err);
+    res.status(500).json({ error: 'Debug info unavailable', details: err.message });
   }
 });
 
