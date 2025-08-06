@@ -45,6 +45,17 @@ const storage = new GridFsStorage({
 });
 const upload = multer({ storage });
 
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  if (
+    username === process.env.ADMIN_USER &&
+    password === process.env.ADMIN_PASS
+  ) {
+    return res.json({ success: true });
+  }
+  res.json({ success: false });
+});
+
 // Get all WODs, include image URLs if available
 app.get('/data', async (req, res) => {
   try {
