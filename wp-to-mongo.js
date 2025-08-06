@@ -8,8 +8,8 @@ const Grid = require('gridfs-stream');
 const { Readable } = require('stream');
 
 // Replace with your actual MongoDB URI and WordPress XML file path
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/wordpressData';
-const WORDPRESS_XML_PATH = process.env.WORDPRESS_XML_PATH || './your-wxr-file.xml';
+const MONGO_URI = process.env.MONGO_URI;
+const WORDPRESS_XML_PATH = process.env.WORDPRESS_XML_PATH;
 
 // Mongoose schema for a WP Post
 const Post = require('./postModel');
@@ -136,7 +136,6 @@ function extractImageUrls(content) {
 
 // Helper function to check if an image is less than 2 years old
 function isImageRecent(url) {
-  // Example URL: https://yourdomain.com/wp-content/uploads/2022/05/image.jpg
   const match = url.match(/\/uploads\/(\d{4})\/(\d{2})\//);
   if (!match) return false;
   const [ , year, month ] = match;
