@@ -7,7 +7,7 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 async function updateAllPosts() {
   const posts = await POST.find({});
   for (const post of posts) {
-    const cleanedContent = post.content.replace(/color:\s*red/gi, 'color:#000');
+    const cleanedContent = post.content.replace(/color\s*:\s*(red|#ff0000)\b/gi, 'color:#000');
     if (cleanedContent !== post.content) {
       post.content = cleanedContent;
       await post.save();
