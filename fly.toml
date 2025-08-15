@@ -9,7 +9,7 @@ primary_region = 'dfw'
 [build]
 
 [env]
-FRONTEND_URL = "https://www.crossfitxlr8.com/"
+FRONTEND_URL = "https://www.crossfitxlr8.com"
 
 [http_service]
   internal_port = 8080
