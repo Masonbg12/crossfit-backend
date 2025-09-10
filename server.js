@@ -272,7 +272,7 @@ app.get('/debug/ip', async (req, res) => {
 
 // Google Reviews fetching route with caching
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-const PLACE_ID = 'ChIJB1YxO8xaaIYRzj70E9Fa4F4'; // Replace with your CrossFit XLR8 Place ID
+const PLACE_ID = 'ChIJB1YxO8xaaIYRzj70E9Fa4F4';
 
 // Simple in-memory cache
 let cachedReviews = null;
