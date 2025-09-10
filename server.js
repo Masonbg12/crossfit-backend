@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const { GridFsStorage } = require('multer-gridfs-storage');
+const axios = require('axios');
 require('dotenv').config();
 
 // Import the WOD model
@@ -269,38 +270,37 @@ app.get('/debug/ip', async (req, res) => {
   }
 });
 
-// Weekly cleanup: delete images from posts older than 2 years, but keep the posts
-/*const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
-setInterval(async () => {
-  try {
-    const db = mongoose.connection.db;
-    const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'images' });
-    const twoYearsAgo = new Date();
-    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+// Google Reviews fetching route with caching
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const PLACE_ID = 'ChIJfaIsJcxaaIYR7c9q1-jHvSI'; // Replace with your CrossFit XLR8 Place ID
 
-    // Find posts older than 2 years
-    const oldPosts = await POST.find({ date: { $lt: twoYearsAgo } });
-    for (const post of oldPosts) {
-      // Delete associated images from GridFS
-      if (post.images && post.images.length > 0) {
-        for (const imgId of post.images) {
-          try {
-            await bucket.delete(imgId);
-            console.log(`Deleted image: ${imgId}`);
-          } catch (err) {
-            console.error(`Failed to delete image: ${imgId}`, err.message);
-          }
-        }
-        // Clear the images array for this post
-        post.images = [];
-        await post.save();
-        console.log(`Cleared images for post: ${post._id}`);
-      }
+// Simple in-memory cache
+let cachedReviews = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
+app.get('/api/google-reviews/reviews', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (cachedReviews && (now - cacheTimestamp < CACHE_DURATION)) {
+      // Serve from cache
+      return res.json(cachedReviews);
     }
+
+    // Fetch from Google Places API
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=reviews,rating,user_ratings_total&key=${GOOGLE_API_KEY}`;
+    const response = await axios.get(url);
+    const reviews = response.data.result.reviews || [];
+
+    // Update cache
+    cachedReviews = reviews;
+    cacheTimestamp = now;
+
+    res.json(reviews);
   } catch (err) {
-    console.error("Error during weekly cleanup:", err.message);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
   }
-}, ONE_WEEK);*/
+});
 
 // Start the server
 const PORT = process.env.PORT || 8080;
