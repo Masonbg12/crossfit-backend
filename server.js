@@ -272,7 +272,7 @@ app.get('/debug/ip', async (req, res) => {
 
 // Google Reviews fetching route with caching
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-const PLACE_ID = 'ChIJfaIsJcxaaIYR7c9q1-jHvSI'; // Replace with your CrossFit XLR8 Place ID
+const PLACE_ID = 'ChIJB1YxO8xaaIYRzj70E9Fa4F4'; // Replace with your CrossFit XLR8 Place ID
 
 // Simple in-memory cache
 let cachedReviews = null;
@@ -298,6 +298,7 @@ app.get('/api/google-reviews/reviews', async (req, res) => {
 
     res.json(reviews);
   } catch (err) {
+    console.error('Error fetching Google reviews:', err.message);
     res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
