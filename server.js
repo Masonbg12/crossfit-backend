@@ -345,7 +345,53 @@ PROGRAMS:
 - Olympic lifting
 - Free trials available
 
+EXERCISES AND MOVEMENTS:
+CrossFit teaches 9 Foundational Movements:
+1. Air Squat
+2. Front Squat
+3. Overhead Squat
+4. Shoulder Press
+5. Push Press
+6. Push Jerk
+7. Deadlift
+8. Sumo Deadlift High Pull
+9. Medicine Ball Clean
+
+Other movements/exercises include:
+- Pull Ups
+- Push Ups
+- Sit Ups
+- Jump Rope
+- Box Jumps
+- Running/Sprinting
+- Rowing
+- Dumbbell Work
+- Kettlebell Swings
+- Wall Balls
+- Static Holds
+- And various others
+
+All exercises are modifiable and scalable to meet any skill level and needs.
+
 FAQ HIGHLIGHTS:
+Q: Do you recommend training daily?
+A: No. Maximum benefits are derived from intensity and recovery. We recommend taking time to recover so you perform your best at every session. This prevents injury and overtraining. Talk to one of our coaches to choose the schedule that meets your specific goals.
+
+Q: Should I warm up and stretch before class?
+A: Please come to CrossFit XLR8 at the scheduled time for your class, and we will warm up together!
+
+Q: Do I have to be in shape to take CrossFit classes?
+A: No. There is a common misconception that CrossFit is for elite athletes. The truth is that it is for everyone. You start the journey where you are today. Our community includes competitive athletes, former athletes, working professionals, stay-at-home parents, people who had never stepped foot into a gym, and people with physical ailments.
+
+Q: Do I need prior experience to take classes?
+A: No. The beauty of CrossFit is that all exercises are based on movements that you already do--like squatting, pushing and pulling. Exercises are scaled to inspire the beginner and challenge the most elite athlete.
+
+Q: What should I expect at my first CrossFit workout?
+A: Your first workout will be a fun and efficient experience. Each class starts with a dynamic warm-up, then skill training, instruction and movement standards for the WOD (workout of the day). For your first class, please arrive a few minutes early to meet our members, coaches and get to know our box.
+
+Q: When is CrossFit Kids?
+A: Please contact us for CrossFit Kids schedules.
+
 - No prior experience needed
 - All fitness levels welcome
 - Exercises are scalable and modifiable
