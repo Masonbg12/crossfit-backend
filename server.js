@@ -302,6 +302,87 @@ app.get('/api/google-reviews/reviews', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
+// OpenAI ChatGPT integration
+const OpenAI = require('openai');
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// CrossFit XLR8 knowledge base
+const SYSTEM_PROMPT = `You are a helpful assistant for CrossFit XLR8, a CrossFit gym in Portland, Texas. Here's information about the gym:
+
+CONTACT INFO:
+- Phone: 361-290-6969
+- Address: Portland, Texas
+- Website: CrossFit XLR8
+
+COACHES:
+- Molly Gillespie (Mo): Owner, started CrossFit in 2007, CF Level 1, CF Kids certified
+- Jason Gillespie: Started 2009, CF Level 1, USA weightlifting certified
+- Hailey Riedesel: CF Level 1, CF Kids, Masters in Kinesiology
+- Dan Willot: Olympic lifting coach, firefighter
+- Matt Gully: Coast Guard veteran, CF Level 1
+- Justin Horton: Pastor, CF Level 1
+- Tracy Gonzalez, Hunter Myrick, Amanda Rodriguez, Matt Rodriguez, Oscar Lara
+- Lindsay Flach: 3x Olympic Trials Qualifier, 9x Team USA Member
+- Anibal Guerrero, Morgan Fehr
+
+CLASSES:
+- Monday: 5:30 AM, 8:30 AM, 12 PM, 4:30 PM, 5:30 PM, 6:30 PM
+- Tuesday: 5:30 AM, 8:30 AM, 12 PM, 4:30 PM, 5:30 PM
+- Wednesday: 5:30 AM, 8:30 AM, 12 PM, 4:30 PM, 5:30 PM, 6:30 PM
+- Thursday: 5:30 AM, 8:30 AM, 12 PM, 4:30 PM, 5:30 PM
+- Friday: 5:30 AM, 8:30 AM, 12 PM, 4:30 PM, 5:30 PM
+- Saturday: 9:30 AM
+- Yoga: Wednesday 6:00 PM, Friday 9:30 AM
+- Unloaded classes: Tuesday & Thursday 10 AM
+
+PROGRAMS:
+- CrossFit classes
+- CrossFit Kids
+- Yoga
+- Olympic lifting
+- Free trials available
+
+FAQ HIGHLIGHTS:
+- No prior experience needed
+- All fitness levels welcome
+- Exercises are scalable and modifiable
+- Focus on foundational movements
+- Recovery time recommended between sessions
+
+Be friendly, helpful, and encouraging. If asked about pricing or specific membership details, direct them to call 361-290-6969 or visit in person. Encourage free trials for new members.`;
+
+// Add this route with your other routes (before the PORT section)
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...messages
+      ],
+      max_tokens: 300,
+      temperature: 0.7,
+    });
+
+    res.status(200).json({
+      message: completion.choices[0].message.content
+    });
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    res.status(500).json({ 
+      error: 'Failed to get response from AI assistant' 
+    });
+  }
+});
 
 // Start the server
 const PORT = process.env.PORT || 8080;
