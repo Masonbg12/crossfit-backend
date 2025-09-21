@@ -304,10 +304,6 @@ app.get('/api/google-reviews/reviews', async (req, res) => {
   }
 });
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 // CrossFit XLR8 knowledge base
 const SYSTEM_PROMPT = `You are a helpful assistant for CrossFit XLR8, a CrossFit gym in Portland, Texas. Here's information about the gym:
 
@@ -352,6 +348,10 @@ FAQ HIGHLIGHTS:
 - Recovery time recommended between sessions
 
 Be friendly, helpful, and encouraging. If asked about pricing or specific membership details, direct them to call 361-290-6969 or visit in person. Encourage free trials for new members.`;
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 app.post('/api/chat', async (req, res) => {
   try {
